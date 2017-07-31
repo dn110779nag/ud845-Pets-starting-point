@@ -1,5 +1,6 @@
 package com.example.android.pets.data;
 
+import android.net.Uri;
 import android.provider.BaseColumns;
 
 /**
@@ -9,6 +10,12 @@ import android.provider.BaseColumns;
 public class PetContract {
     private PetContract() {}
 
+    public static final String LOG_TAG = "pets";
+
+    public static final String AUTHORITY = "com.example.android.pets";
+    public static final Uri BASE_CONTENT_URI = Uri.parse("content://"+AUTHORITY);
+    public static final String PATH_PETS = "pets";
+    public static final Uri CONTENT_URI = Uri.withAppendedPath(BASE_CONTENT_URI, PATH_PETS);
 
     public static final String CREATE_TABLE =
             "CREATE TABLE "+PetEntry.TABLE_NAME

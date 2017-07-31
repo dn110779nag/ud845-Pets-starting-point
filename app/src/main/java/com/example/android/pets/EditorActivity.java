@@ -15,6 +15,7 @@
  */
 package com.example.android.pets;
 
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
@@ -26,9 +27,13 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.Toast;
 
+import com.example.android.pets.data.PetContract;
 import com.example.android.pets.data.PetContract.PetEntry;
 import com.example.android.pets.data.PetDbHelper;
+
+import java.net.URI;
 
 /**
  * Allows user to create a new pet or edit an existing one.
@@ -122,8 +127,19 @@ public class EditorActivity extends AppCompatActivity {
         String breed = mBreedEditText.getText().toString();
         int gender = mGender;
         int weight = Integer.parseInt(mWeightEditText.getText().toString());
-
-        petDbHelper.insertPet(name, breed, gender, weight);
+        Uri newUri = getContentResolver().insert(
+                PetContract.CONTENT_URI,
+                petDbHelper.createValues(name, breed, gender, weight));
+        if (newUri == null) {
+            // If the new content URI is null, then there was an error with insertion.
+            Toast.makeText(this, getString(R.string.editor_insert_pet_failed),
+                    Toast.LENGTH_SHORT).show();
+        } else {
+            // Otherwise, the insertion was successful and we can display a toast.
+            Toast.makeText(this, getString(R.string.editor_insert_pet_successful),
+                    Toast.LENGTH_SHORT).show();
+        }
+//        petDbHelper.insertPet(name, breed, gender, weight);
     }
 
     @Override

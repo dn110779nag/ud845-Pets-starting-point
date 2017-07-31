@@ -86,8 +86,10 @@ public class CatalogActivity extends AppCompatActivity {
     }
 
     private void insertPets() {
-        long rowId = petDbHelper.insertPet("Toto", "Terrier", PetEntry.GENDER_MALE, 7);
-
+//        long rowId = petDbHelper.insertPet("Toto", "Terrier", PetEntry.GENDER_MALE, 7);
+        getContentResolver().insert(
+                PetContract.CONTENT_URI,
+                petDbHelper.createValues("Toto", "Terrier", PetEntry.GENDER_MALE, 7));
         displayDatabaseInfo();
     }
 
@@ -99,14 +101,17 @@ public class CatalogActivity extends AppCompatActivity {
      */
     private void displayDatabaseInfo() {
         // Create and/or open a database to read from it
-        SQLiteDatabase db = petDbHelper.getReadableDatabase();
+//        SQLiteDatabase db = petDbHelper.getReadableDatabase();
 
         // Perform this raw SQL query "SELECT * FROM pets"
         // to get a Cursor that contains all rows from the pets table.
-        Cursor cursor = db.query(
-                PetEntry.TABLE_NAME,
-                null,
-                null, null, null, null, PetEntry.COLUMN_PET_NAME);
+//        Cursor cursor = db.query(
+//                PetEntry.TABLE_NAME,
+//                null,
+//                null, null, null, null, PetEntry.COLUMN_PET_NAME);
+        Cursor cursor = getContentResolver().query(PetContract.CONTENT_URI,
+                null, null, null,
+                PetEntry.COLUMN_PET_NAME);
 
         try {
             // Display the number of rows in the Cursor (which reflects the number of rows in the
