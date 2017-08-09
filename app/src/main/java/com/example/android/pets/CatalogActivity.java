@@ -25,9 +25,11 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import com.example.android.pets.data.PetContract;
+import com.example.android.pets.data.PetCursorAdapter;
 import com.example.android.pets.data.PetDbHelper;
 import com.example.android.pets.data.PetContract.PetEntry;
 /**
@@ -113,22 +115,9 @@ public class CatalogActivity extends AppCompatActivity {
                 null, null, null,
                 PetEntry.COLUMN_PET_NAME);
 
-        try {
-            // Display the number of rows in the Cursor (which reflects the number of rows in the
-            // pets table in the database).
-            TextView displayView = (TextView) findViewById(R.id.text_view_pet);
-            displayView.setText("Number of rows in pets database table: " + cursor.getCount());
-            while(cursor.moveToNext()){
-                displayView.append("\n");
-                for(int i=0; i<cursor.getColumnCount();i++){
-                    displayView.append(cursor.getColumnName(i)+"=>"+cursor.getString(i)+";");
-                }
-            }
+        ListView lvItems = (ListView) findViewById(R.id.list_view_pet);
+        PetCursorAdapter adapter = new PetCursorAdapter(this, cursor);
+        lvItems.setAdapter(adapter);
 
-        } finally {
-            // Always close the cursor when you're done reading from it. This releases all its
-            // resources and makes it invalid.
-            cursor.close();
-        }
     }
 }

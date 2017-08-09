@@ -36,7 +36,7 @@ public class PetsContentProvider extends ContentProvider {
         // The content URI of the form "content://com.example.android.pets/pets" will map to the
         // integer code {@link #PETS}. This URI is used to provide access to MULTIPLE rows
         // of the pets table.
-        sUriMatcher.addURI(PetContract.AUTHORITY, PetContract.PATH_PETS, PETS);
+        sUriMatcher.addURI(PetContract.CONTENT_AUTHORITY, PetContract.PATH_PETS, PETS);
 
         // The content URI of the form "content://com.example.android.pets/pets/#" will map to the
         // integer code {@link #PETS_ID}. This URI is used to provide access to ONE single row
@@ -45,7 +45,7 @@ public class PetsContentProvider extends ContentProvider {
         // In this case, the "#" wildcard is used where "#" can be substituted for an integer.
         // For example, "content://com.example.android.pets/pets/3" matches, but
         // "content://com.example.android.pets/pets" (without a number at the end) doesn't match.
-        sUriMatcher.addURI(PetContract.AUTHORITY, PetContract.PATH_PETS + "/#", PET_ID);
+        sUriMatcher.addURI(PetContract.CONTENT_AUTHORITY, PetContract.PATH_PETS + "/#", PET_ID);
     }
     public PetsContentProvider() {
 
@@ -53,8 +53,22 @@ public class PetsContentProvider extends ContentProvider {
 
     @Override
     public int delete(Uri uri, String selection, String[] selectionArgs) {
-        // Implement this to handle requests to delete one or more rows.
-        throw new UnsupportedOperationException("Not yet implemented");
+        // Get writeable database
+        SQLiteDatabase database = petDbHelper.getWritableDatabase();
+
+        final int match = sUriMatcher.match(uri);
+        switch (match) {
+            case PETS:
+                // Delete all rows that match the selection and selection args
+                return database.delete(PetEntry.TABLE_NAME, selection, selectionArgs);
+            case PET_ID:
+                // Delete a single row given by the ID in the URI
+                selection = PetEntry._ID + "=?";
+                selectionArgs = new String[]{String.valueOf(ContentUris.parseId(uri))};
+                return database.delete(PetEntry.TABLE_NAME, selection, selectionArgs);
+            default:
+                throw new IllegalArgumentException("Deletion is not supported for " + uri);
+        }
     }
 
     @Override
@@ -76,7 +90,7 @@ public class PetsContentProvider extends ContentProvider {
         }
     }
 
-    private Uri insertPet(Uri uri, ContentValues values) {
+    private void validate(ContentValues values){
         String name = values.getAsString(PetEntry.COLUMN_PET_NAME);
         if(name == null || name.trim().equals("")){
             throw new IllegalArgumentException("Name must not be null");
@@ -91,6 +105,10 @@ public class PetsContentProvider extends ContentProvider {
         if(weight == null || weight < 0){
             throw new IllegalArgumentException("Illegal value for weight "+weight);
         }
+    }
+
+    private Uri insertPet(Uri uri, ContentValues values) {
+        validate(values);
 
         long id = this.petDbHelper.getWritableDatabase().insert(PetEntry.TABLE_NAME, null, values);
 
@@ -150,9 +168,32 @@ public class PetsContentProvider extends ContentProvider {
     }
 
     @Override
-    public int update(Uri uri, ContentValues values, String selection,
+    public int update(Uri uri, ContentValues contentValues, String selection,
                       String[] selectionArgs) {
-        // TODO: Implement this to handle requests to update one or more rows.
-        throw new UnsupportedOperationException("Not yet implemented");
+        final int match = sUriMatcher.match(uri);
+        switch (match) {
+            case PETS:
+                return updatePet(uri, contentValues, selection, selectionArgs);
+            case PET_ID:
+                // For the PET_ID code, extract out the ID from the URI,
+                // so we know which row to update. Selection will be "_id=?" and selection
+                // arguments will be a String array containing the actual ID.
+                selection = PetEntry._ID + "=?";
+                selectionArgs = new String[] { String.valueOf(ContentUris.parseId(uri)) };
+                return updatePet(uri, contentValues, selection, selectionArgs);
+            default:
+                throw new IllegalArgumentException("Update is not supported for " + uri);
+        }
     }
+
+    /**
+     * Update pets in the database with the given content values. Apply the changes to the rows
+     * specified in the selection and selection arguments (which could be 0 or 1 or more pets).
+     * Return the number of rows that were successfully updated.
+     */
+    private int updatePet(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
+        validate(values);
+        return this.petDbHelper.getWritableDatabase().update(PetEntry.TABLE_NAME, values, selection, selectionArgs);
+    }
+
 }
