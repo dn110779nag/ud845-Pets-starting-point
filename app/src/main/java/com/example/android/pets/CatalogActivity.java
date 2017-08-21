@@ -15,8 +15,11 @@
  */
 package com.example.android.pets;
 
+import android.app.LoaderManager;
 import android.content.ContentValues;
+import android.content.CursorLoader;
 import android.content.Intent;
+import android.content.Loader;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
@@ -32,12 +35,16 @@ import com.example.android.pets.data.PetContract;
 import com.example.android.pets.data.PetCursorAdapter;
 import com.example.android.pets.data.PetDbHelper;
 import com.example.android.pets.data.PetContract.PetEntry;
+
+import static com.example.android.pets.data.PetContract.CONTENT_URI;
+
 /**
  * Displays list of pets that were entered and stored in the app.
  */
-public class CatalogActivity extends AppCompatActivity {
+public class CatalogActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
 
     private PetDbHelper petDbHelper;
+    private PetCursorAdapter adapter;
 
     @Override
     protected void onStart() {
@@ -60,8 +67,16 @@ public class CatalogActivity extends AppCompatActivity {
             }
         });
         petDbHelper = new PetDbHelper(this);
+        ListView lvItems = (ListView) findViewById(R.id.list_view_pet);
+
+        // Find and set empty view on the ListView, so that it only shows when the list has 0 items.
+        View emptyView = findViewById(R.id.empty_view);
+        lvItems.setEmptyView(emptyView);
+        adapter = new PetCursorAdapter(this, null);
+        lvItems.setAdapter(adapter);
         displayDatabaseInfo();
     }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -90,7 +105,7 @@ public class CatalogActivity extends AppCompatActivity {
     private void insertPets() {
 //        long rowId = petDbHelper.insertPet("Toto", "Terrier", PetEntry.GENDER_MALE, 7);
         getContentResolver().insert(
-                PetContract.CONTENT_URI,
+                CONTENT_URI,
                 petDbHelper.createValues("Toto", "Terrier", PetEntry.GENDER_MALE, 7));
         displayDatabaseInfo();
     }
@@ -111,13 +126,34 @@ public class CatalogActivity extends AppCompatActivity {
 //                PetEntry.TABLE_NAME,
 //                null,
 //                null, null, null, null, PetEntry.COLUMN_PET_NAME);
-        Cursor cursor = getContentResolver().query(PetContract.CONTENT_URI,
-                null, null, null,
-                PetEntry.COLUMN_PET_NAME);
+//        Cursor cursor = getContentResolver().query(PetContract.CONTENT_URI,
+//                null, null, null,
+//                PetEntry.COLUMN_PET_NAME);
 
-        ListView lvItems = (ListView) findViewById(R.id.list_view_pet);
-        PetCursorAdapter adapter = new PetCursorAdapter(this, cursor);
-        lvItems.setAdapter(adapter);
 
+
+        getLoaderManager().initLoader(0, null, this);
+
+    }
+
+
+
+    @Override
+    public Loader onCreateLoader(int id, Bundle args) {
+//        Cursor cursor = getContentResolver().query(PetContract.CONTENT_URI,
+//                null, null, null,
+//                PetEntry.COLUMN_PET_NAME);
+        return new CursorLoader( this, CONTENT_URI, null, null, null, null);
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        this.adapter.swapCursor(data);
+    }
+
+
+    @Override
+    public void onLoaderReset(Loader loader) {
+        this.adapter.swapCursor(null);
     }
 }
