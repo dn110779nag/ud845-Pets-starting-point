@@ -145,24 +145,35 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         return true;
     }
 
-    private void addPet() {
+    private void savePet() {
         String name = mNameEditText.getText().toString();
         String breed = mBreedEditText.getText().toString();
-        int gender = mGender;
-        int weight = Integer.parseInt(mWeightEditText.getText().toString());
-        Uri newUri = getContentResolver().insert(
-                PetContract.CONTENT_URI,
-                petDbHelper.createValues(name, breed, gender, weight));
-        if (newUri == null) {
-            // If the new content URI is null, then there was an error with insertion.
-            Toast.makeText(this, getString(R.string.editor_insert_pet_failed),
-                    Toast.LENGTH_SHORT).show();
-        } else {
-            // Otherwise, the insertion was successful and we can display a toast.
-            Toast.makeText(this, getString(R.string.editor_insert_pet_successful),
-                    Toast.LENGTH_SHORT).show();
+        if(TextUtils.isEmpty(name) || TextUtils.isEmpty(name)){
+            return;
         }
-//        petDbHelper.insertPet(name, breed, gender, weight);
+        int gender = mGender;
+        String sWeight = mWeightEditText.getText().toString();
+
+        int weight = Integer.parseInt(TextUtils.isEmpty(sWeight)?"0":sWeight);
+        if (this.uri != null) {
+            int cnt = getContentResolver().update(
+                    this.uri,
+                    petDbHelper.createValues(name, breed, gender, weight),
+                    null, null);
+        } else {
+            Uri newUri = getContentResolver().insert(
+                    PetContract.CONTENT_URI,
+                    petDbHelper.createValues(name, breed, gender, weight));
+            if (newUri == null) {
+                // If the new content URI is null, then there was an error with insertion.
+                Toast.makeText(this, getString(R.string.editor_insert_pet_failed),
+                        Toast.LENGTH_SHORT).show();
+            } else {
+                // Otherwise, the insertion was successful and we can display a toast.
+                Toast.makeText(this, getString(R.string.editor_insert_pet_successful),
+                        Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     @Override
@@ -171,7 +182,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         switch (item.getItemId()) {
             // Respond to a click on the "Save" menu option
             case R.id.action_save:
-                addPet();
+                savePet();
                 finish();
                 return true;
             // Respond to a click on the "Delete" menu option
@@ -189,7 +200,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        return new CursorLoader( this, uri, null, null, null, null);
+        return new CursorLoader(this, uri, null, null, null, null);
     }
 
     @Override
@@ -198,7 +209,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         this.setTitle("Edit " + data.getInt(data.getColumnIndex(PetEntry._ID)));
         mNameEditText.setText(data.getString(data.getColumnIndex(PetEntry.COLUMN_PET_NAME)));
         mBreedEditText.setText(data.getString(data.getColumnIndex(PetEntry.COLUMN_PET_BREED)));
-        mWeightEditText.setText(""+data.getInt(data.getColumnIndex(PetEntry.COLUMN_PET_WEIGHT)));
+        mWeightEditText.setText("" + data.getInt(data.getColumnIndex(PetEntry.COLUMN_PET_WEIGHT)));
         mGenderSpinner.setSelection(data.getInt(data.getColumnIndex(PetEntry.COLUMN_PET_GENDER)));
     }
 
