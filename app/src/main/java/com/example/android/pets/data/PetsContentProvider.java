@@ -9,6 +9,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.util.Log;
 
+import com.example.android.pets.CatalogActivity;
 import com.example.android.pets.data.PetContract.PetEntry;
 
 import static com.example.android.pets.data.PetContract.LOG_TAG;
@@ -57,18 +58,23 @@ public class PetsContentProvider extends ContentProvider {
         SQLiteDatabase database = petDbHelper.getWritableDatabase();
 
         final int match = sUriMatcher.match(uri);
+        int ret = -1;
         switch (match) {
             case PETS:
                 // Delete all rows that match the selection and selection args
-                return database.delete(PetEntry.TABLE_NAME, selection, selectionArgs);
+                ret = database.delete(PetEntry.TABLE_NAME, selection, selectionArgs);
+                break;
             case PET_ID:
                 // Delete a single row given by the ID in the URI
                 selection = PetEntry._ID + "=?";
                 selectionArgs = new String[]{String.valueOf(ContentUris.parseId(uri))};
-                return database.delete(PetEntry.TABLE_NAME, selection, selectionArgs);
+                ret = database.delete(PetEntry.TABLE_NAME, selection, selectionArgs);
+                break;
             default:
                 throw new IllegalArgumentException("Deletion is not supported for " + uri);
         }
+        this.getContext().getContentResolver().notifyChange(uri,null);
+        return ret;
     }
 
     @Override
@@ -111,7 +117,7 @@ public class PetsContentProvider extends ContentProvider {
         validate(values);
 
         long id = this.petDbHelper.getWritableDatabase().insert(PetEntry.TABLE_NAME, null, values);
-
+        this.getContext().getContentResolver().notifyChange(uri, null);
         // Once we know the ID of the new row in the table,
         // return the new URI with the ID appended to the end of it
         return ContentUris.withAppendedId(uri, id);
@@ -135,6 +141,7 @@ public class PetsContentProvider extends ContentProvider {
 
         // Figure out if the URI matcher can match the URI to a specific code
         int match = sUriMatcher.match(uri);
+        Log.i(CatalogActivity.LOG_TAG, "match ==>"+match+" - "+uri);
         switch (match) {
             case PETS:
                 // For the PETS code, query the pets table directly with the given
@@ -164,6 +171,7 @@ public class PetsContentProvider extends ContentProvider {
             default:
                 throw new IllegalArgumentException("Cannot query unknown URI " + uri);
         }
+        cursor.setNotificationUri(this.getContext().getContentResolver(), uri);
         return cursor;
     }
 
@@ -171,19 +179,27 @@ public class PetsContentProvider extends ContentProvider {
     public int update(Uri uri, ContentValues contentValues, String selection,
                       String[] selectionArgs) {
         final int match = sUriMatcher.match(uri);
+        int ret = -1;
+
         switch (match) {
             case PETS:
-                return updatePet(uri, contentValues, selection, selectionArgs);
+                ret = updatePet(uri, contentValues, selection, selectionArgs);
+                break;
             case PET_ID:
                 // For the PET_ID code, extract out the ID from the URI,
                 // so we know which row to update. Selection will be "_id=?" and selection
                 // arguments will be a String array containing the actual ID.
                 selection = PetEntry._ID + "=?";
                 selectionArgs = new String[] { String.valueOf(ContentUris.parseId(uri)) };
-                return updatePet(uri, contentValues, selection, selectionArgs);
+                ret = updatePet(uri, contentValues, selection, selectionArgs);
+                break;
             default:
                 throw new IllegalArgumentException("Update is not supported for " + uri);
         }
+        if(ret>0) {
+            this.getContext().getContentResolver().notifyChange(uri, null);
+        }
+        return ret;
     }
 
     /**
@@ -193,7 +209,9 @@ public class PetsContentProvider extends ContentProvider {
      */
     private int updatePet(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
         validate(values);
-        return this.petDbHelper.getWritableDatabase().update(PetEntry.TABLE_NAME, values, selection, selectionArgs);
+        int ret = this.petDbHelper.getWritableDatabase().update(PetEntry.TABLE_NAME, values, selection, selectionArgs);
+        this.getContext().getContentResolver().notifyChange(uri,null);
+        return ret;
     }
 
 }

@@ -59,4 +59,6 @@ public class PetCursorAdapter extends CursorAdapter {
                         + ", Weight: " + cursor.getInt(cursor.getColumnIndexOrThrow(PetEntry.COLUMN_PET_WEIGHT))
         );
     }
+
+
 }

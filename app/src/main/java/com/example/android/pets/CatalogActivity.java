@@ -16,19 +16,24 @@
 package com.example.android.pets;
 
 
+import android.content.ContentUris;
 import android.content.Intent;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
 
+import com.example.android.pets.data.PetContract;
 import com.example.android.pets.data.PetContract.PetEntry;
 import com.example.android.pets.data.PetCursorAdapter;
 import com.example.android.pets.data.PetDbHelper;
@@ -42,6 +47,7 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
 
     private PetDbHelper petDbHelper;
     private PetCursorAdapter adapter;
+    public static String LOG_TAG = "com.example";
 
 
     @Override
@@ -66,6 +72,19 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
         lvItems.setEmptyView(emptyView);
         adapter = new PetCursorAdapter(this, null);
         lvItems.setAdapter(adapter);
+        lvItems.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+                Log.i(LOG_TAG, "id ==> "+id);
+                Intent intent = new Intent(CatalogActivity.this, EditorActivity.class);
+                Log.i("MY_DEBUG", "id ==> "+id);
+
+//                intent.putExtra("ID", id);
+                intent.setData(ContentUris.withAppendedId(PetContract.CONTENT_URI, id));
+                startActivity(intent);
+
+            }
+        });
         getSupportLoaderManager().initLoader(0, null, this);
 //        displayDatabaseInfo();
     }
